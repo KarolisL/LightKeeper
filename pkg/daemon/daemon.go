@@ -1,29 +1,15 @@
 package daemon
 
-import "github.com/KarolisL/lightkeeper/pkg/daemon/config"
-
-type Message string
-
-type Input interface {
-	Ch() <-chan Message
-}
-
-type Output interface {
-	Ch() chan<- Message
-}
-
-type InputMaker interface {
-	NewInput(inputType string, params config.Params) Input
-}
-
-type OutputMaker interface {
-	NewOutput(outputType string, params config.Params) Output
-}
+import (
+	"github.com/KarolisL/lightkeeper/pkg/daemon/config"
+	"github.com/KarolisL/lightkeeper/pkg/plugins/input"
+	"github.com/KarolisL/lightkeeper/pkg/plugins/output"
+)
 
 type Daemon struct {
 }
 
-func NewDaemon(config config.Config, inputMaker InputMaker, outputMaker OutputMaker) *Daemon {
+func NewDaemon(config config.Config, inputMaker input.InputMaker, outputMaker output.OutputMaker) *Daemon {
 	for _, input := range config.Inputs {
 		inputMaker.NewInput(input.Type, input.Params)
 	}

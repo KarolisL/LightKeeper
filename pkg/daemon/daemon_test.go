@@ -2,6 +2,8 @@ package daemon
 
 import (
 	"github.com/KarolisL/lightkeeper/pkg/daemon/config"
+	"github.com/KarolisL/lightkeeper/pkg/plugins/input"
+	"github.com/KarolisL/lightkeeper/pkg/plugins/output"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 )
@@ -15,7 +17,7 @@ type stubInputPluginRegistry struct {
 	calls []call
 }
 
-func (ipr *stubInputPluginRegistry) NewInput(inputType string, params config.Params) Input {
+func (ipr *stubInputPluginRegistry) NewInput(inputType string, params config.Params) input.Input {
 	ipr.calls = append(ipr.calls, call{inputType, params})
 	return nil
 }
@@ -24,7 +26,7 @@ type stubOutputPluginRegistry struct {
 	calls []call
 }
 
-func (opr *stubOutputPluginRegistry) NewOutput(outputType string, params config.Params) Output {
+func (opr *stubOutputPluginRegistry) NewOutput(outputType string, params config.Params) output.Output {
 	opr.calls = append(opr.calls, call{outputType, params})
 	return nil
 }
