@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pelletier/go-toml"
 	"io"
+	"os"
 )
 
 type Filter struct {
@@ -11,7 +12,6 @@ type Filter struct {
 }
 
 type Input struct {
-	Name string
 	Path string
 	Type string
 }
@@ -41,4 +41,13 @@ func NewConfigFromReader(r io.Reader) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func NewConfigFromFile(path string) (*Config, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file %q: %w", path, err)
+	}
+
+	return NewConfigFromReader(file)
 }
