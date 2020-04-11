@@ -1,4 +1,4 @@
-package daemon
+package config
 
 import (
 	"github.com/google/go-cmp/cmp"

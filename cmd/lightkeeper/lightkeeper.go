@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/KarolisL/lightkeeper/pkg/daemon"
+	"github.com/KarolisL/lightkeeper/pkg/daemon/config"
 	"os"
 )
 
@@ -20,7 +20,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg, _ := daemon.NewConfigFromFile(configLocation)
+	cfg, _ := config.NewConfigFromFile(configLocation)
 
 	fmt.Printf("%+v", cfg)
 
