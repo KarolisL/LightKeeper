@@ -7,24 +7,26 @@ import (
 	"os"
 )
 
+type Params map[string]string
+
 type Filter struct {
 	Program string
 }
 
 type Input struct {
-	Path string
-	Type string
+	Type   string
+	Params Params
 }
 
 type Mapping struct {
 	From    string
 	To      string
-	Filters []map[string]string
+	Filters []Params
 }
 
 type Output struct {
-	Type string
-	Sink map[string]string
+	Type   string
+	Params Params
 }
 
 type Config struct {

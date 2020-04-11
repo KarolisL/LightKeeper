@@ -9,8 +9,8 @@ import (
 // language = toml
 const validToml = `
 [inputs.varlogmessages]
-path = "/var/log/messages"
 type = "syslog-ng"
+params.path = "/var/log/messages"
 
 [[mappings]]
 from = "varlogmessages"
@@ -19,8 +19,8 @@ filters = [{ program = "sshd" }]
 
 [outputs.telegram]
 type = "telegram"
-sink.token = "TheToken"
-sink.chatId = "3344"
+params.token = "TheToken"
+params.chatId = "3344"
 `
 
 func TestNewConfigFromReader(t *testing.T) {
@@ -30,15 +30,17 @@ func TestNewConfigFromReader(t *testing.T) {
 		want := Config{
 			Inputs: map[string]Input{
 				"varlogmessages": {
-					Path: "/var/log/messages",
 					Type: "syslog-ng",
+					Params: map[string]string{
+						"path": "/var/log/messages",
+					},
 				},
 			},
 			Mappings: []Mapping{
 				{
 					From: "varlogmessages",
 					To:   "telegram",
-					Filters: []map[string]string{
+					Filters: []Params{
 						{"program": "sshd"},
 					},
 				},
@@ -46,7 +48,7 @@ func TestNewConfigFromReader(t *testing.T) {
 			Outputs: map[string]Output{
 				"telegram": {
 					Type: "telegram",
-					Sink: map[string]string{
+					Params: map[string]string{
 						"token":  "TheToken",
 						"chatId": "3344",
 					},
