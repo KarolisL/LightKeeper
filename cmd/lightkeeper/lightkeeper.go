@@ -21,7 +21,5 @@ func main() {
 	}
 
 	cfg, _ := config.NewConfigFromFile(configLocation)
-
 	fmt.Printf("%+v", cfg)
-
 }
