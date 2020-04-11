@@ -11,21 +11,26 @@ type Filter struct {
 }
 
 type Input struct {
-	Name    string
-	Path    string
-	Type    string
-	Filters []Filter
-	Output  string
+	Name string
+	Path string
+	Type string
+}
+
+type Mapping struct {
+	From    string
+	To      string
+	Filters []map[string]string
 }
 
 type Output struct {
-	Type   string
-	Values map[string]string
+	Type string
+	Sink map[string]string
 }
 
 type Config struct {
-	Inputs  map[string]Input
-	Outputs map[string]Output
+	Inputs   map[string]Input
+	Mappings []Mapping
+	Outputs  map[string]Output
 }
 
 func NewConfigFromReader(r io.Reader) (*Config, error) {
