@@ -7,6 +7,7 @@ import (
 )
 
 var ErrPluginTypeNotFound = errors.New("plugin not found")
+var Registry = &PluginRegistry{}
 
 type NewOutputFunc func(params config.Params) (Output, error)
 

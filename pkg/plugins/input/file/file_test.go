@@ -43,7 +43,6 @@ func assertReceivedMessage(t *testing.T, got common.Message, want common.Message
 	if got != want {
 		t.Errorf("Wrong message received from Ch() channel: got %q, want %q", got, want)
 	}
-
 }
 
 func assertNoError(t *testing.T, err error) {

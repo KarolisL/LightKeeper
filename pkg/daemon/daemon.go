@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"fmt"
 	"github.com/KarolisL/lightkeeper/pkg/daemon/config"
 	"github.com/KarolisL/lightkeeper/pkg/plugins/input"
 	"github.com/KarolisL/lightkeeper/pkg/plugins/output"
@@ -20,19 +21,19 @@ func (d *Daemon) Start() {
 
 func (d *Daemon) connectSync(mapping config.Mapping) {
 	src := d.inputs[mapping.From].Ch()
-	dest := d.outputs[mapping.From].Ch()
+	dest := d.outputs[mapping.To].Ch()
 
 	for message := range src {
 		dest <- message
 	}
 }
 
-func NewDaemon(config config.Config, inputMaker input.Maker, outputMaker output.OutputMaker) (*Daemon, error) {
+func NewDaemon(config *config.Config, inputMaker input.Maker, outputMaker output.OutputMaker) (*Daemon, error) {
 	inputs := make(map[string]input.Input)
 	for name, inputConfig := range config.Inputs {
 		newInput, err := inputMaker.NewInput(inputConfig.Type, inputConfig.Params)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("creating input %q: %w", name, err)
 		}
 		inputs[name] = newInput
 	}
@@ -41,7 +42,7 @@ func NewDaemon(config config.Config, inputMaker input.Maker, outputMaker output.
 	for name, outputConfig := range config.Outputs {
 		newOutput, err := outputMaker.NewOutput(outputConfig.Type, outputConfig.Params)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("creating output %q: %w", name, err)
 		}
 		outputs[name] = newOutput
 	}

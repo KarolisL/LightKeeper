@@ -63,7 +63,7 @@ func TestNewDaemon(t *testing.T) {
 	})
 
 	t.Run("Two inputs and two outputs", func(t *testing.T) {
-		cfg := config.Config{
+		cfg := &config.Config{
 			Inputs: map[string]config.Input{
 				"1": makeInput("someInput1", nil),
 				"2": makeInput("someInput2", nil),
@@ -128,7 +128,7 @@ func (s *stubOutputPlugin) Ch() chan<- common.Message {
 
 func TestDaemon_Start(t *testing.T) {
 	t.Run("Test connection from intput to output", func(t *testing.T) {
-		cfg := config.Config{
+		cfg := &config.Config{
 			Inputs: map[string]config.Input{
 				"1": makeInput("someInput1", nil),
 				"2": makeInput("someInput2", nil),
@@ -212,8 +212,8 @@ func assertInputRegistryCalled(t *testing.T, ipr *stubInputPluginRegistry, calls
 	}
 }
 
-func makeSimpleConfig() config.Config {
-	return config.Config{
+func makeSimpleConfig() *config.Config {
+	return &config.Config{
 		Inputs: map[string]config.Input{
 			"varlogmessages": makeInput("syslog-ng", config.Params{"path": "/var/log/messages"}),
 		},
