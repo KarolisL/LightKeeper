@@ -8,6 +8,8 @@ import (
 
 var ErrPluginTypeNotFound = errors.New("plugin not found")
 
+var Registry = &PluginRegistry{}
+
 type NewInputFunc func(params config.Params) (Input, error)
 
 type PluginRegistry struct {

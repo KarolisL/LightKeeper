@@ -167,7 +167,7 @@ func TestDaemon_Start(t *testing.T) {
 		go daemon.Start()
 		sendWithTimeout(t, inCh, common.Message("Hi!"))
 
-		got := receiveWithTimeout(t, outCh)
+		got := test_utils.ReceiveWithTimeout(t, outCh)
 		want := common.Message("Hi!")
 
 		if got != want {
@@ -184,19 +184,6 @@ func sendWithTimeout(t *testing.T, ch chan common.Message, message common.Messag
 		t.Fatalf("Wasn't able to send message in %d ms", timeout.Milliseconds())
 	case ch <- message:
 	}
-}
-
-func receiveWithTimeout(t *testing.T, ch chan common.Message) common.Message {
-	t.Helper()
-	timeout := 100 * time.Millisecond
-	select {
-	case <-time.After(timeout):
-		t.Fatalf("Wasn't able to receive message in %d ms", timeout.Milliseconds())
-	case message := <-ch:
-		return message
-	}
-
-	return ""
 }
 
 func assertOutputRegistryCalled(t *testing.T, opr *stubOutputPluginRegistry, calls []call) {
