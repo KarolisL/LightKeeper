@@ -1,10 +1,13 @@
 package daemon
 
 import (
+	"errors"
 	"github.com/KarolisL/lightkeeper/pkg/daemon/config"
 	"github.com/KarolisL/lightkeeper/pkg/plugins/input"
 	"github.com/KarolisL/lightkeeper/pkg/plugins/output"
+	"github.com/KarolisL/lightkeeper/pkg/test_utils"
 	"github.com/google/go-cmp/cmp"
+	"io/ioutil"
 	"testing"
 )
 
@@ -14,12 +17,16 @@ type call struct {
 }
 
 type stubInputPluginRegistry struct {
+	returnValue struct {
+		i   input.Input
+		err error
+	}
 	calls []call
 }
 
-func (ipr *stubInputPluginRegistry) NewInput(inputType string, params config.Params) input.Input {
+func (ipr *stubInputPluginRegistry) NewInput(inputType string, params config.Params) (input.Input, error) {
 	ipr.calls = append(ipr.calls, call{inputType, params})
-	return nil
+	return ipr.returnValue.i, ipr.returnValue.err
 }
 
 type stubOutputPluginRegistry struct {
@@ -74,6 +81,26 @@ func TestNewDaemon(t *testing.T) {
 			{"someOutput1", nil},
 			{"someOutput2", nil},
 			{"someOutput3", nil},
+		})
+	})
+
+	t.Run("Input plugin returns error", func(t *testing.T) {
+		cfg := makeSimpleConfig()
+		inputCreationError := errors.New("inputCreationError")
+
+		ipr := &stubInputPluginRegistry{returnValue: struct {
+			i   input.Input
+			err error
+		}{i: nil, err: inputCreationError}}
+
+		opr := &stubOutputPluginRegistry{}
+		_, err := NewDaemon(cfg, ipr, opr)
+
+		test_utils.AssertErrorIs(t, err, inputCreationError)
+		assertInputRegistryCalled(t, ipr, []call{
+			{
+				"syslog-ng",
+				map[string]string{"path": "/var/log/messages"}},
 		})
 	})
 }

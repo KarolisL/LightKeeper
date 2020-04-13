@@ -9,14 +9,17 @@ import (
 type Daemon struct {
 }
 
-func NewDaemon(config config.Config, inputMaker input.Maker, outputMaker output.OutputMaker) *Daemon {
-	for _, input := range config.Inputs {
-		inputMaker.NewInput(input.Type, input.Params)
+func NewDaemon(config config.Config, inputMaker input.Maker, outputMaker output.OutputMaker) (*Daemon, error) {
+	for _, inp := range config.Inputs {
+		_, err := inputMaker.NewInput(inp.Type, inp.Params)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	for _, output := range config.Outputs {
-		outputMaker.NewOutput(output.Type, output.Params)
+	for _, o := range config.Outputs {
+		outputMaker.NewOutput(o.Type, o.Params)
 	}
 	d := &Daemon{}
-	return d
+	return d, nil
 }

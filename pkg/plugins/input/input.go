@@ -10,5 +10,5 @@ type Input interface {
 }
 
 type Maker interface {
-	NewInput(inputType string, params config.Params) Input
+	NewInput(inputType string, params config.Params) (Input, error)
 }

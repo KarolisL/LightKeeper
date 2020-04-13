@@ -1,10 +1,10 @@
 package input
 
 import (
-	"errors"
 	"fmt"
 	"github.com/KarolisL/lightkeeper/pkg/common"
 	"github.com/KarolisL/lightkeeper/pkg/daemon/config"
+	"github.com/KarolisL/lightkeeper/pkg/test_utils"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 )
@@ -51,7 +51,7 @@ func TestPluginRegistry_NewInput(t *testing.T) {
 
 		_, err := registry.NewInput("syslog-ng", make(config.Params))
 
-		assertErrorIs(t, err, stubError)
+		test_utils.AssertErrorIs(t, err, stubError)
 		assertStubCalls(t, calls, []call{{map[string]string{}}})
 	})
 
@@ -59,7 +59,7 @@ func TestPluginRegistry_NewInput(t *testing.T) {
 		registry := PluginRegistry{}
 
 		_, err := registry.NewInput("syslog-ng", make(config.Params))
-		assertErrorIs(t, err, ErrPluginTypeNotFound)
+		test_utils.AssertErrorIs(t, err, ErrPluginTypeNotFound)
 	})
 }
 
@@ -74,12 +74,5 @@ func assertStubCalls(t *testing.T, got, want []call) {
 	t.Helper()
 	if diff := cmp.Diff(got, want); diff != "" {
 		t.Errorf("NewInput called stubInput wrong amount of times or with wrong arguments (-want, +got):\n%s", diff)
-	}
-}
-
-func assertErrorIs(t *testing.T, got, want error) {
-	t.Helper()
-	if !errors.Is(got, want) {
-		t.Errorf("NewInput returned wrong error, got %q want %q", got, want)
 	}
 }
