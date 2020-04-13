@@ -9,7 +9,7 @@ import (
 type Daemon struct {
 }
 
-func NewDaemon(config config.Config, inputMaker input.InputMaker, outputMaker output.OutputMaker) *Daemon {
+func NewDaemon(config config.Config, inputMaker input.Maker, outputMaker output.OutputMaker) *Daemon {
 	for _, input := range config.Inputs {
 		inputMaker.NewInput(input.Type, input.Params)
 	}

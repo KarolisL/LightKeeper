@@ -9,6 +9,6 @@ type Input interface {
 	Ch() <-chan common.Message
 }
 
-type InputMaker interface {
+type Maker interface {
 	NewInput(inputType string, params config.Params) Input
 }
