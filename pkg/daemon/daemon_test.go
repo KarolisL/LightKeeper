@@ -2,12 +2,14 @@ package daemon
 
 import (
 	"errors"
+	"github.com/KarolisL/lightkeeper/pkg/common"
 	"github.com/KarolisL/lightkeeper/pkg/daemon/config"
 	"github.com/KarolisL/lightkeeper/pkg/plugins/input"
 	"github.com/KarolisL/lightkeeper/pkg/plugins/output"
 	"github.com/KarolisL/lightkeeper/pkg/test_utils"
 	"github.com/google/go-cmp/cmp"
 	"testing"
+	"time"
 )
 
 type call struct {
@@ -29,12 +31,16 @@ func (ipr *stubInputPluginRegistry) NewInput(inputType string, params config.Par
 }
 
 type stubOutputPluginRegistry struct {
+	returnValue struct {
+		o   output.Output
+		err error
+	}
 	calls []call
 }
 
-func (opr *stubOutputPluginRegistry) NewOutput(outputType string, params config.Params) output.Output {
+func (opr *stubOutputPluginRegistry) NewOutput(outputType string, params config.Params) (output.Output, error) {
 	opr.calls = append(opr.calls, call{outputType, params})
-	return nil
+	return opr.returnValue.o, opr.returnValue.err
 }
 
 func TestNewDaemon(t *testing.T) {
@@ -102,6 +108,95 @@ func TestNewDaemon(t *testing.T) {
 				map[string]string{"path": "/var/log/messages"}},
 		})
 	})
+}
+
+type stubInputPlugin struct {
+	ch <-chan common.Message
+}
+
+func (s *stubInputPlugin) Ch() <-chan common.Message {
+	return s.ch
+}
+
+type stubOutputPlugin struct {
+	ch chan<- common.Message
+}
+
+func (s *stubOutputPlugin) Ch() chan<- common.Message {
+	return s.ch
+}
+
+func TestDaemon_Start(t *testing.T) {
+	t.Run("Test connection from intput to output", func(t *testing.T) {
+		cfg := config.Config{
+			Inputs: map[string]config.Input{
+				"1": makeInput("someInput1", nil),
+				"2": makeInput("someInput2", nil),
+			},
+			Mappings: []config.Mapping{
+				{
+					From:    "1",
+					To:      "2",
+					Filters: nil,
+				},
+			},
+			Outputs: map[string]config.Output{
+				"1": makeOutput("someOutput1", nil),
+				"2": makeOutput("someOutput2", nil),
+				"3": makeOutput("someOutput3", nil),
+			},
+		}
+		inCh := make(chan common.Message)
+		outCh := make(chan common.Message)
+		stubInput := &stubInputPlugin{inCh}
+		stubOutput := &stubOutputPlugin{outCh}
+		ipr := &stubInputPluginRegistry{returnValue: struct {
+			i   input.Input
+			err error
+		}{i: stubInput, err: nil}}
+		opr := &stubOutputPluginRegistry{returnValue: struct {
+			o   output.Output
+			err error
+		}{o: stubOutput, err: nil}}
+
+		daemon, err := NewDaemon(cfg, ipr, opr)
+		if err != nil {
+			t.Fatalf("NewDaemon returned error, got %q", err)
+		}
+
+		go daemon.Start()
+		sendWithTimeout(t, inCh, common.Message("Hi!"))
+
+		got := receiveWithTimeout(t, outCh)
+		want := common.Message("Hi!")
+
+		if got != want {
+			t.Errorf("Daemon.Start cause wrong message to be sent, got %q, want %q", got, want)
+		}
+	})
+}
+
+func sendWithTimeout(t *testing.T, ch chan common.Message, message common.Message) {
+	t.Helper()
+	timeout := 100 * time.Millisecond
+	select {
+	case <-time.After(timeout):
+		t.Fatalf("Wasn't able to send message in %d ms", timeout.Milliseconds())
+	case ch <- message:
+	}
+}
+
+func receiveWithTimeout(t *testing.T, ch chan common.Message) common.Message {
+	t.Helper()
+	timeout := 100 * time.Millisecond
+	select {
+	case <-time.After(timeout):
+		t.Fatalf("Wasn't able to receive message in %d ms", timeout.Milliseconds())
+	case message := <-ch:
+		return message
+	}
+
+	return ""
 }
 
 func assertOutputRegistryCalled(t *testing.T, opr *stubOutputPluginRegistry, calls []call) {

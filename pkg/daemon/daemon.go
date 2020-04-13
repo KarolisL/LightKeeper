@@ -7,19 +7,48 @@ import (
 )
 
 type Daemon struct {
+	inputs   map[string]input.Input
+	outputs  map[string]output.Output
+	mappings []config.Mapping
+}
+
+func (d *Daemon) Start() {
+	for _, mapping := range d.mappings {
+		go d.connectSync(mapping)
+	}
+}
+
+func (d *Daemon) connectSync(mapping config.Mapping) {
+	src := d.inputs[mapping.From].Ch()
+	dest := d.outputs[mapping.From].Ch()
+
+	for message := range src {
+		dest <- message
+	}
 }
 
 func NewDaemon(config config.Config, inputMaker input.Maker, outputMaker output.OutputMaker) (*Daemon, error) {
-	for _, inp := range config.Inputs {
-		_, err := inputMaker.NewInput(inp.Type, inp.Params)
+	inputs := make(map[string]input.Input)
+	for name, inputConfig := range config.Inputs {
+		newInput, err := inputMaker.NewInput(inputConfig.Type, inputConfig.Params)
 		if err != nil {
 			return nil, err
 		}
+		inputs[name] = newInput
 	}
 
-	for _, o := range config.Outputs {
-		outputMaker.NewOutput(o.Type, o.Params)
+	outputs := make(map[string]output.Output)
+	for name, outputConfig := range config.Outputs {
+		newOutput, err := outputMaker.NewOutput(outputConfig.Type, outputConfig.Params)
+		if err != nil {
+			return nil, err
+		}
+		outputs[name] = newOutput
 	}
-	d := &Daemon{}
+
+	mappings := config.Mappings
+
+	d := &Daemon{inputs: inputs, outputs: outputs, mappings: mappings}
+
 	return d, nil
 }

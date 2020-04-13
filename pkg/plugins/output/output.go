@@ -10,5 +10,5 @@ type Output interface {
 }
 
 type OutputMaker interface {
-	NewOutput(outputType string, params config.Params) Output
+	NewOutput(outputType string, params config.Params) (Output, error)
 }
