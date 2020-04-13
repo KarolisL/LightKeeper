@@ -7,7 +7,6 @@ import (
 	"github.com/KarolisL/lightkeeper/pkg/plugins/output"
 	"github.com/KarolisL/lightkeeper/pkg/test_utils"
 	"github.com/google/go-cmp/cmp"
-	"io/ioutil"
 	"testing"
 )
 
