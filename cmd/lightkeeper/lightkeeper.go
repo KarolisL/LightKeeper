@@ -32,5 +32,9 @@ func main() {
 	}
 
 	d.Start()
-	<-make(chan struct{})
+	blockForever()
+}
+
+func blockForever() struct{} {
+	return <-make(chan struct{})
 }
