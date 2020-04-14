@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+
+START=50
+
+USE_PROCD=1
+
+config=/etc/lightkeeper/config.toml
+
+start_service() {
+        [ -f $config ] || return 1
+        procd_open_instance
+        procd_set_param command /usr/bin/lightkeeper -config "$config"
+        procd_close_instance
+}
+

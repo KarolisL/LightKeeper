@@ -1,3 +1,8 @@
+# Is copied from root
 /data/usr/bin/lightkeeper
+/data/etc/init.d/ligthkeeper
+/etc/init.d/lightkeeper
+
+# Is generated via template
 /control/control
 
