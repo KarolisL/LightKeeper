@@ -1,0 +1,13 @@
+[inputs.in]
+type = "file"
+params.path = "/var/log/messages"
+
+[[mappings]]
+from = "in"
+to = "stdout"
+[[mappings.filters]]
+type = "syslog-ng"
+program = "sshd"
+
+[outputs.stdout]
+type = "stdout"
