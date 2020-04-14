@@ -8,6 +8,7 @@ import (
 	_ "github.com/KarolisL/lightkeeper/pkg/plugins/input/file"
 	"github.com/KarolisL/lightkeeper/pkg/plugins/output"
 	_ "github.com/KarolisL/lightkeeper/pkg/plugins/output/stdout"
+	_ "github.com/KarolisL/lightkeeper/pkg/plugins/output/telegram"
 	"log"
 	"os"
 )
@@ -35,6 +36,6 @@ func main() {
 	blockForever()
 }
 
-func blockForever() struct{} {
-	return <-make(chan struct{})
+func blockForever() {
+	<-make(chan struct{})
 }

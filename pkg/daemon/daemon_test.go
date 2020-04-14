@@ -9,7 +9,6 @@ import (
 	"github.com/KarolisL/lightkeeper/pkg/test_utils"
 	"github.com/google/go-cmp/cmp"
 	"testing"
-	"time"
 )
 
 type call struct {
@@ -165,7 +164,7 @@ func TestDaemon_Start(t *testing.T) {
 		}
 
 		go daemon.Start()
-		sendWithTimeout(t, inCh, common.Message("Hi!"))
+		test_utils.SendWithTimeout(t, inCh, common.Message("Hi!"))
 
 		got := test_utils.ReceiveWithTimeout(t, outCh)
 		want := common.Message("Hi!")
@@ -174,16 +173,6 @@ func TestDaemon_Start(t *testing.T) {
 			t.Errorf("Daemon.Start cause wrong message to be sent, got %q, want %q", got, want)
 		}
 	})
-}
-
-func sendWithTimeout(t *testing.T, ch chan common.Message, message common.Message) {
-	t.Helper()
-	timeout := 100 * time.Millisecond
-	select {
-	case <-time.After(timeout):
-		t.Fatalf("Wasn't able to send message in %d ms", timeout.Milliseconds())
-	case ch <- message:
-	}
 }
 
 func assertOutputRegistryCalled(t *testing.T, opr *stubOutputPluginRegistry, calls []call) {

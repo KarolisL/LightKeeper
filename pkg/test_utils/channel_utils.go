@@ -18,3 +18,13 @@ func ReceiveWithTimeout(t *testing.T, ch <-chan common.Message) common.Message {
 
 	return ""
 }
+
+func SendWithTimeout(t *testing.T, ch chan<- common.Message, message common.Message) {
+	t.Helper()
+	timeout := 100 * time.Millisecond
+	select {
+	case <-time.After(timeout):
+		t.Fatalf("Wasn't able to send message in %d ms", timeout.Milliseconds())
+	case ch <- message:
+	}
+}
