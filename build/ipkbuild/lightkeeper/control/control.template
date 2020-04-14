@@ -1,0 +1,8 @@
+Package: lightkeeper
+Priority: optional
+Section: net
+Maintainer: Karolis Labrencis <karolis@labrencis.lt>
+Source: https://github.com/KarolisL/lightkeeper
+Version: $VERSION
+Architecture: arm_cortex-a9_vfpv3
+Description: A daemon which can notify about new lines in (log) files

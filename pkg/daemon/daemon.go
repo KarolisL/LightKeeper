@@ -2,9 +2,11 @@ package daemon
 
 import (
 	"fmt"
+	"github.com/KarolisL/lightkeeper/pkg/common"
 	"github.com/KarolisL/lightkeeper/pkg/daemon/config"
 	"github.com/KarolisL/lightkeeper/pkg/plugins/input"
 	"github.com/KarolisL/lightkeeper/pkg/plugins/output"
+	"regexp"
 )
 
 type Daemon struct {
@@ -22,10 +24,36 @@ func (d *Daemon) Start() {
 func (d *Daemon) connectSync(mapping config.Mapping) {
 	src := d.inputs[mapping.From].Ch()
 	dest := d.outputs[mapping.To].Ch()
+	var filters []*regexp.Regexp
+
+	filters = constructFilters(mapping, filters)
 
 	for message := range src {
-		dest <- message
+		if matchesAll(filters, message) {
+			dest <- message
+		}
 	}
+}
+
+func constructFilters(mapping config.Mapping, filters []*regexp.Regexp) []*regexp.Regexp {
+	for _, filter := range mapping.Filters {
+		if filter["type"] == "syslog-ng" {
+			program := filter["program"]
+			pattern := syslogNgProgramRegex(program)
+			filters = append(filters, regexp.MustCompile(pattern))
+		}
+	}
+	return filters
+}
+
+func matchesAll(filters []*regexp.Regexp, message common.Message) bool {
+	for _, filter := range filters {
+		if !filter.MatchString(message.String()) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func NewDaemon(config *config.Config, inputMaker input.Maker, outputMaker output.OutputMaker) (*Daemon, error) {
@@ -52,4 +80,8 @@ func NewDaemon(config *config.Config, inputMaker input.Maker, outputMaker output
 	d := &Daemon{inputs: inputs, outputs: outputs, mappings: mappings}
 
 	return d, nil
+}
+
+func syslogNgProgramRegex(program string) string {
+	return fmt.Sprintf(`(?P<month>\w+)  ?(?P<day>\d+) (?P<time>\d{2}:\d{2}:\d{2}) (?P<hostname>.+) (?P<program>%s)(\[(?P<pid>\w+)\])?: (?P<msg>.*)`, program)
 }
