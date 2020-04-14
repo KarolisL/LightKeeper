@@ -127,52 +127,79 @@ func (s *stubOutputPlugin) Ch() chan<- common.Message {
 
 func TestDaemon_Start(t *testing.T) {
 	t.Run("Test connection from intput to output", func(t *testing.T) {
-		cfg := &config.Config{
-			Inputs: map[string]config.Input{
-				"1": makeInput("someInput1", nil),
-				"2": makeInput("someInput2", nil),
-			},
-			Mappings: []config.Mapping{
-				{
-					From:    "1",
-					To:      "2",
-					Filters: nil,
-				},
-			},
-			Outputs: map[string]config.Output{
-				"1": makeOutput("someOutput1", nil),
-				"2": makeOutput("someOutput2", nil),
-				"3": makeOutput("someOutput3", nil),
-			},
-		}
-		inCh := make(chan common.Message)
-		outCh := make(chan common.Message)
-		stubInput := &stubInputPlugin{inCh}
-		stubOutput := &stubOutputPlugin{outCh}
-		ipr := &stubInputPluginRegistry{returnValue: struct {
-			i   input.Input
-			err error
-		}{i: stubInput, err: nil}}
-		opr := &stubOutputPluginRegistry{returnValue: struct {
-			o   output.Output
-			err error
-		}{o: stubOutput, err: nil}}
-
-		daemon, err := NewDaemon(cfg, ipr, opr)
-		if err != nil {
-			t.Fatalf("NewDaemon returned error, got %q", err)
-		}
+		daemon, in, out := daemonTest(t, config.Mapping{
+			From:    "1",
+			To:      "2",
+			Filters: nil,
+		})
 
 		go daemon.Start()
-		test_utils.SendWithTimeout(t, inCh, common.Message("Hi!"))
+		test_utils.SendWithTimeout(t, in, "Hi!")
 
-		got := test_utils.ReceiveWithTimeout(t, outCh)
+		got := test_utils.ReceiveWithTimeout(t, out)
 		want := common.Message("Hi!")
 
 		if got != want {
 			t.Errorf("Daemon.Start cause wrong message to be sent, got %q, want %q", got, want)
 		}
 	})
+
+	t.Run("Test test filtering", func(t *testing.T) {
+		daemon, in, out := daemonTest(t, config.Mapping{
+			From: "1",
+			To:   "2",
+			Filters: []config.Params{{
+				"type":    "syslog-ng",
+				"program": "sshd",
+			}},
+		},
+		)
+		go daemon.Start()
+		test_utils.SendWithTimeout(t, in, "Hi!")
+		sshdMessage := "Apr 14 09:21:52 some-host sshd[32252]: Accepted publickey for root from 10.10.1.2 port 50919 ssh2: RSA SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+		test_utils.SendWithTimeout(t, in, common.Message(sshdMessage))
+
+		got := test_utils.ReceiveWithTimeout(t, out)
+		want := common.Message(sshdMessage)
+
+		if got != want {
+			t.Errorf("Daemon.Start cause wrong message to be sent, got %q, want %q", got, want)
+		}
+	})
+}
+
+func daemonTest(t *testing.T, mapping config.Mapping) (daemon *Daemon, in chan common.Message, out chan common.Message) {
+	cfg := &config.Config{
+		Inputs: map[string]config.Input{
+			"1": makeInput("someInput1", nil),
+			"2": makeInput("someInput2", nil),
+		},
+		Mappings: []config.Mapping{mapping},
+		Outputs: map[string]config.Output{
+			"1": makeOutput("someOutput1", nil),
+			"2": makeOutput("someOutput2", nil),
+			"3": makeOutput("someOutput3", nil),
+		},
+	}
+	in = make(chan common.Message)
+	out = make(chan common.Message)
+	stubInput := &stubInputPlugin{in}
+	stubOutput := &stubOutputPlugin{out}
+	ipr := &stubInputPluginRegistry{returnValue: struct {
+		i   input.Input
+		err error
+	}{i: stubInput, err: nil}}
+	opr := &stubOutputPluginRegistry{returnValue: struct {
+		o   output.Output
+		err error
+	}{o: stubOutput, err: nil}}
+
+	daemon, err := NewDaemon(cfg, ipr, opr)
+	if err != nil {
+		t.Fatalf("NewDaemon returned error, got %q", err)
+	}
+
+	return
 }
 
 func assertOutputRegistryCalled(t *testing.T, opr *stubOutputPluginRegistry, calls []call) {
