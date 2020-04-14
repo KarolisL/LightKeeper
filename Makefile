@@ -9,6 +9,7 @@ copy-omnia:
 	mkdir -p $(IPK_DIR)/data/usr/bin/
 	mkdir -p $(IPK_DIR)/data/etc/init.d
 	cp init/procd/lightkeeper $(IPK_DIR)/data/etc/init.d
+	chmod +x $(IPK_DIR)/data/etc/init.d/lightkeeper
 	cp $(BIN_DIR)/$(PROGRAM)-linux-armv7l $(IPK_DIR)/data/usr/bin/$(PROGRAM)
 
 build-linux-armv7l:
