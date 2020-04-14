@@ -1,0 +1,108 @@
+= LightKeeper
+
+LightKeeper is a notification daemon.
+At the moment, LK supports sending a https://telegram.org[Telegram]
+message when a line appears in a file.
+Optionally, it is possible to define one or more filters, so you won't get flooded.
+
+== Features
+- [x] File input
+- [x] Monitoring for changes in input file
+- [ ] Network input
+- [ ] JournalD input
+- [ ] Input file position recovery after restart
+- [x] Filtering based on `syslog-ng` logger (program)
+- [ ] Filtering based on arbitrary regex
+- [ ] Stdout output (handy for debugging)
+- [x] Telegram output
+- [ ] Slack output
+- [ ] Support for multiplexing (same input to multiple outputs)?
+      Workaround: redefine input
+- [ ] Error handling
+- [x] OPKG Package for https://en.wikipedia.org/wiki/Turris_Omnia[Turris Omnia]
+- [ ] OPKG Repository
+- [ ] Debian package
+- [ ] RedHat package
+
+== Use case
+
+=== Sending logs about SSH activity from Turris Omnia to Telegram
+
+==== Prerequisites
+. Telegram bot token
+. Your Telegram userId or chatId where bot is invited
+      (tested only with userId)
+. GNU sed (`brew install gnu-sed` on macOS)
+. GNU tar (`brew install gnu-tar` on macOS)
+
+
+==== Building and Installing
+
+Build the package:
+
+[source,sh]
+----
+make opkg-omnia
+----
+
+opkg (.ipk) package will be available in `/build/ipkbuild` subfolder, called `lightkeeper-x.y.z.ipk`
+
+
+Copy to router:
+
+[source,sh]
+----
+# Replace root and 192.168.1.1 with your router username and IP/hostname
+$ scp ./build/ipkgbuild/lightkeeper-x.y.z.ipk root@192.168.1.1:/tmp/lk.ipk
+----
+
+Install:
+
+[source,sh]
+----
+$ ssh root@192.168.1.1
+root@router:~# opkg install /tmp/lk.ipk
+----
+
+===== Configuration
+
+Create config providing Telegram configuration
+[source,sh]
+----
+cat <<EOF > /etc/ligthkeeper/config.toml
+# We create an input called "in"
+[inputs.in]
+# We must specify type "file"
+type = "file"
+# Specify file path which to monitor
+params.path = "/var/log/messages"
+
+# We configure a list of 1 mapping
+[[mappings]]
+# We specify "in" input from above
+from = "in"
+# We'll send to "out" defined below
+to = "out"
+# We define a list of 1 filter
+[[mappings.filters]]
+type = "syslog-ng"
+program = "sshd"
+
+# We define an output called "out"
+[outputs.out]
+# We'll output to telegram
+type = "telegram"
+# Modify this
+params.token = "<TelegramToken"
+# Modify this
+params.chatId = "<TelegramChatId>"
+EOF
+----
+
+Enable LightKeeper service
+
+[source,sh]
+----
+/etc/init.d/lightkeeper enable
+/etc/init.d/lightkeeper start
+----
