@@ -47,7 +47,9 @@ func TestNewDaemon(t *testing.T) {
 		cfg := makeSimpleConfig()
 		ipr := &stubInputPluginRegistry{}
 		opr := &stubOutputPluginRegistry{}
-		NewDaemon(cfg, ipr, opr)
+
+		_, err := NewDaemon(cfg, ipr, opr)
+		assertNoError(t, err)
 
 		assertInputRegistryCalled(t, ipr, []call{
 			{
@@ -75,7 +77,9 @@ func TestNewDaemon(t *testing.T) {
 		}
 		ipr := &stubInputPluginRegistry{}
 		opr := &stubOutputPluginRegistry{}
-		NewDaemon(cfg, ipr, opr)
+
+		_, err := NewDaemon(cfg, ipr, opr)
+		assertNoError(t, err)
 
 		assertInputRegistryCalled(t, ipr, []call{
 			{"someInput1", nil},
@@ -107,6 +111,13 @@ func TestNewDaemon(t *testing.T) {
 				map[string]string{"path": "/var/log/messages"}},
 		})
 	})
+}
+
+func assertNoError(t *testing.T, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatalf("Expected NewDaemon to not return error, got %v", err)
+	}
 }
 
 type stubInputPlugin struct {
@@ -209,8 +220,10 @@ func assertOutputRegistryCalled(t *testing.T, opr *stubOutputPluginRegistry, cal
 	}
 
 	for i, want := range calls {
-		if diff := cmp.Diff(want, opr.calls[i]); diff != "" {
-			t.Errorf("Call to OutputPluginRegistry #%d mismatch (-want +got):\n%s", i, diff)
+		if !matchesAny(calls, want) {
+			if diff := cmp.Diff(calls, opr.calls); diff != "" {
+				t.Errorf("Wanted call to OutputPluginRegistry #%d mismatch (-want +got):\n%s", i, diff)
+			}
 		}
 	}
 }
@@ -222,10 +235,22 @@ func assertInputRegistryCalled(t *testing.T, ipr *stubInputPluginRegistry, calls
 	}
 
 	for i, want := range calls {
-		if diff := cmp.Diff(want, ipr.calls[i]); diff != "" {
-			t.Errorf("Call to InputPluginRegistry #%d mismatch (-want +got):\n%s", i, diff)
+		if !matchesAny(calls, want) {
+			if diff := cmp.Diff(calls, ipr.calls); diff != "" {
+				t.Errorf("Wanted call to InputPluginRegistry #%d mismatch (-want +got):\n%s", i, diff)
+			}
 		}
 	}
+}
+
+func matchesAny(got []call, want call) bool {
+	for _, g := range got {
+		if cmp.Equal(g, want) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func makeSimpleConfig() *config.Config {

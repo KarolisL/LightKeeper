@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 
 dir="build/ipkbuild/lightkeeper"
@@ -14,6 +14,11 @@ fi
 # OPKG version comparison: it splits by the last hyphen.
 VERSION=$(git describe --tags --dirty | $sed 's/-/_/2g')
 export VERSION="${VERSION#v}"
+
+if [ -z "$VERSION" ]; then
+    echo "Unable to determine version from git tag. Exiting" >&2
+    exit 1
+fi
 
 set -ex
 
