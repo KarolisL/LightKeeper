@@ -10,25 +10,63 @@ import (
 )
 
 type Daemon struct {
-	inputs   map[string]input.Input
+	inputs   map[string]input.FanoutInput
 	outputs  map[string]output.Output
 	mappings []config.Mapping
 }
 
+func NewDaemon(config *config.Config, inputMaker input.Maker, outputMaker output.Maker) (*Daemon, error) {
+	inputs := make(map[string]input.FanoutInput)
+	for name, inputConfig := range config.Inputs {
+		newInput, err := inputMaker.NewFanOutInput(inputConfig.Type, inputConfig.Params)
+		if err != nil {
+			return nil, fmt.Errorf("creating input %q: %w", name, err)
+		}
+		inputs[name] = newInput
+	}
+
+	outputs := make(map[string]output.Output)
+	for name, outputConfig := range config.Outputs {
+		newOutput, err := outputMaker.NewOutput(outputConfig.Type, outputConfig.Params)
+		if err != nil {
+			return nil, fmt.Errorf("creating output %q: %w", name, err)
+		}
+		outputs[name] = newOutput
+	}
+
+	mappings := config.Mappings
+
+	d := &Daemon{inputs: inputs, outputs: outputs, mappings: mappings}
+
+	return d, nil
+}
+
 func (d *Daemon) Start() {
-	for _, mapping := range d.mappings {
-		go d.connectSync(mapping)
+	for i, mapping := range d.mappings {
+		consume := d.makeConsumer(i, mapping)
+		go consume()
+	}
+
+	for _, inp := range d.inputs {
+		go func(inp input.FanoutInput) {
+			err := inp.Start()
+			if err != nil {
+				panic(err)
+			}
+		}(inp)
 	}
 }
 
-func (d *Daemon) connectSync(mapping config.Mapping) {
-	src := d.inputs[mapping.From].Ch()
+func (d *Daemon) makeConsumer(i int, mapping config.Mapping) func() {
+	src, _ := d.inputs[mapping.From].StartListener(fmt.Sprintf("mapping#%d[%s -> %s]", i+1, mapping.From, mapping.To))
 	dest := d.outputs[mapping.To].Ch()
 	filters := constructFilters(mapping)
 
-	for message := range src {
-		if matchesAll(filters, message) {
-			dest <- message
+	return func() {
+		for message := range src {
+			if matchesAll(filters, message) {
+				dest <- message
+			}
 		}
 	}
 }
@@ -53,32 +91,6 @@ func matchesAll(filters []*regexp.Regexp, message common.Message) bool {
 	}
 
 	return true
-}
-
-func NewDaemon(config *config.Config, inputMaker input.Maker, outputMaker output.OutputMaker) (*Daemon, error) {
-	inputs := make(map[string]input.Input)
-	for name, inputConfig := range config.Inputs {
-		newInput, err := inputMaker.NewInput(inputConfig.Type, inputConfig.Params)
-		if err != nil {
-			return nil, fmt.Errorf("creating input %q: %w", name, err)
-		}
-		inputs[name] = newInput
-	}
-
-	outputs := make(map[string]output.Output)
-	for name, outputConfig := range config.Outputs {
-		newOutput, err := outputMaker.NewOutput(outputConfig.Type, outputConfig.Params)
-		if err != nil {
-			return nil, fmt.Errorf("creating output %q: %w", name, err)
-		}
-		outputs[name] = newOutput
-	}
-
-	mappings := config.Mappings
-
-	d := &Daemon{inputs: inputs, outputs: outputs, mappings: mappings}
-
-	return d, nil
 }
 
 func syslogNgProgramRegex(program string) string {

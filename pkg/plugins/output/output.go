@@ -1,3 +1,4 @@
+//go:generate mockgen -destination ./mock/maker.gen.go . Maker
 package output
 
 import (
@@ -9,6 +10,6 @@ type Output interface {
 	Ch() chan<- common.Message
 }
 
-type OutputMaker interface {
+type Maker interface {
 	NewOutput(outputType string, params config.Params) (Output, error)
 }
