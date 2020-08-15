@@ -24,9 +24,7 @@ func (d *Daemon) Start() {
 func (d *Daemon) connectSync(mapping config.Mapping) {
 	src := d.inputs[mapping.From].Ch()
 	dest := d.outputs[mapping.To].Ch()
-	var filters []*regexp.Regexp
-
-	filters = constructFilters(mapping, filters)
+	filters := constructFilters(mapping)
 
 	for message := range src {
 		if matchesAll(filters, message) {
@@ -35,7 +33,8 @@ func (d *Daemon) connectSync(mapping config.Mapping) {
 	}
 }
 
-func constructFilters(mapping config.Mapping, filters []*regexp.Regexp) []*regexp.Regexp {
+func constructFilters(mapping config.Mapping) []*regexp.Regexp {
+	var filters []*regexp.Regexp
 	for _, filter := range mapping.Filters {
 		if filter["type"] == "syslog-ng" {
 			program := filter["program"]
