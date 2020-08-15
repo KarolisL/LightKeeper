@@ -2,6 +2,9 @@ package main
 
 import (
 	"flag"
+	"log"
+	"os"
+
 	"github.com/KarolisL/lightkeeper/pkg/daemon"
 	"github.com/KarolisL/lightkeeper/pkg/daemon/config"
 	"github.com/KarolisL/lightkeeper/pkg/plugins/input"
@@ -9,8 +12,6 @@ import (
 	"github.com/KarolisL/lightkeeper/pkg/plugins/output"
 	_ "github.com/KarolisL/lightkeeper/pkg/plugins/output/stdout"
 	_ "github.com/KarolisL/lightkeeper/pkg/plugins/output/telegram"
-	"log"
-	"os"
 )
 
 var configLocation string
