@@ -16,8 +16,7 @@ Optionally, it is possible to define one or more filters, so you won't get flood
 - [ ] Stdout output (handy for debugging)
 - [x] Telegram output
 - [ ] Slack output
-- [ ] Support for multiplexing (same input to multiple outputs)?
-      Workaround: redefine input
+- [x] Support for multiplexing (same input mapped to multiple outputs)
 - [ ] Error handling
 - [x] OPKG Package for https://en.wikipedia.org/wiki/Turris_Omnia[Turris Omnia]
 - [ ] OPKG Repository
