@@ -36,3 +36,16 @@ func (r *PluginRegistry) NewInput(inputType string, params config.Params) (Input
 	}
 	return input, nil
 }
+
+func (r *PluginRegistry) NewFanOutInput(inputType string, params config.Params) (FanoutInput, error) {
+	input, err := r.NewInput(inputType, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return FanOut(input), nil
+}
+
+func FanOut(input Input) FanoutInput {
+	return &fanoutInput{orig: input}
+}

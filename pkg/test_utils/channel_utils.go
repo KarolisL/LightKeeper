@@ -8,7 +8,7 @@ import (
 
 func ReceiveWithTimeout(t *testing.T, ch <-chan common.Message) common.Message {
 	t.Helper()
-	timeout := 100 * time.Millisecond
+	timeout := 200 * time.Millisecond
 	select {
 	case <-time.After(timeout):
 		t.Fatalf("Wasn't able to receive message in %d ms", timeout.Milliseconds())
